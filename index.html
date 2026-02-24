@@ -1,7 +1,382 @@
-<div id="wrap">
-  <div id="mapBox">
-    <img id="mapImg" src="https://i.imgur.com/j5upGje.jpeg" alt="map">
-<div id="pin">
-  <div class="pingRing"></div>
-  <img id="pinImg" src="https://i.imgur.com/CtI20w2.png" alt="pin">
-</div>
+<!doctype html>
+<html lang="sv">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Overlay</title>
+  <style>
+    *{ box-sizing:border-box; }
+
+    html,body{
+      margin:0;
+      width:100%;
+      height:100%;
+      background:transparent;
+      overflow:hidden;
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    }
+
+    #wrap{
+      width:100%;
+      height:100%;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:24px;
+    }
+
+    #mapBox{
+      position:relative;
+      width:min(1600px, 96vw);
+      aspect-ratio:16 / 9;
+      border-radius:18px;
+      overflow:hidden;
+      background:transparent;
+    }
+
+    #mapImg{
+      position:absolute;
+      inset:0;
+      width:100%;
+      height:100%;
+      object-fit:contain;
+      user-select:none;
+      -webkit-user-drag:none;
+    }
+
+    /* =========================
+       PIN SYSTEM
+    ========================= */
+
+    #pin{
+      position:absolute;
+      left:50%;
+      top:50%;
+      transform:translate(-50%,-50%);
+      pointer-events:none;
+    }
+
+    #pin .pingRing{
+      position:absolute;
+      left:50%;
+      top:50%;
+      width:22px;
+      height:22px;
+      transform:translate(-50%,-50%);
+      border-radius:999px;
+      border:2px solid rgba(46,168,255,.9);
+      animation: ping 2.8s ease-out infinite;
+    }
+
+    #pin::after{
+      content:"";
+      position:absolute;
+      left:50%;
+      top:50%;
+      width:22px;
+      height:22px;
+      transform:translate(-50%,-50%);
+      border-radius:999px;
+      border:2px solid rgba(46,168,255,.6);
+      animation: ping 2.8s ease-out infinite;
+      animation-delay:1.4s;
+    }
+
+    /* Ansiktet / bussen */
+    #pinImg{
+      position:absolute;
+      left:50%;
+      top:50%;
+      transform:translate(-50%, -58%);
+      width:54px !important;
+      height:auto;
+      filter: drop-shadow(0 8px 18px rgba(0,0,0,.55));
+      user-select:none;
+      -webkit-user-drag:none;
+    }
+
+    @keyframes ping{
+      0%   { transform:translate(-50%,-50%) scale(.6); opacity:.9; }
+      70%  { transform:translate(-50%,-50%) scale(2.8); opacity:.2; }
+      100% { transform:translate(-50%,-50%) scale(3.2); opacity:0; }
+    }
+
+    #dbg{
+      position:absolute;
+      left:12px;
+      bottom:12px;
+      padding:8px 10px;
+      border-radius:10px;
+      font-size:12px;
+      color:#fff;
+      background:rgba(0,0,0,.45);
+      backdrop-filter: blur(6px);
+      display:none;
+      white-space:pre;
+      z-index:10;
+    }
+  </style>
+</head>
+<body>
+  <div id="wrap">
+    <div id="mapBox">
+      <img id="mapImg" src="https://i.imgur.com/j5upGje.jpeg" alt="map" />
+      <div id="pin">
+        <div class="pingRing"></div>
+        <img id="pinImg" src="https://i.imgur.com/CtI20w2.png" alt="pin" />
+      </div>
+      <div id="dbg"></div>
+    </div>
+  </div>
+
+  <script>
+    /***********************
+      Traccar (via Cloudflare Worker) → pin on custom image (least-squares affine)
+      Image: https://i.imgur.com/j5upGje.jpeg
+    ************************/
+
+    const POS_URL = "https://delicate-mud-07e0.erik-bondesson99.workers.dev/pos";
+    const OVERLAY_KEY = "slope";
+    const POLL_MS = 1000;
+    const SMOOTH = 0.18;
+    let DEBUG = false;
+
+    const CAL = [
+      { name:"Dresden",     lat:51.054763, lon:13.747020, x:1372, y: 621 },
+      { name:"Nurnberg",    lat:49.445086, lon:11.082028, x:1173, y: 802 },
+      { name:"Munster",     lat:51.957394, lon: 7.635755, x: 918, y: 510 },
+      { name:"Hannover",    lat:52.383871, lon: 9.732742, x:1078, y: 463 },
+      { name:"Amsterdam",   lat:52.371712, lon: 4.831078, x: 721, y: 460 },
+      { name:"Bremen",      lat:53.087970, lon: 8.797499, x:1008, y: 377 },
+      { name:"Saarbrucken", lat:49.236904, lon: 6.987325, x: 872, y: 824 },
+      { name:"Pratteln",    lat:47.518277, lon: 7.694486, x: 924, y:1020 },
+      { name:"Milano",      lat:45.471507, lon: 9.178016, x:1035, y:1235 },
+      { name:"Lyon",        lat:45.756971, lon: 4.838215, x: 716, y:1206 },
+      { name:"Toulouse",    lat:43.598646, lon: 1.439185, x: 463, y:1428 }
+    ];
+
+    const mapBox = document.getElementById("mapBox");
+    const mapImg = document.getElementById("mapImg");
+    const pin    = document.getElementById("pin");
+    const dbg    = document.getElementById("dbg");
+
+    const clamp = (n,a,b)=>Math.max(a, Math.min(b,n));
+
+    let imgFit = null;
+    let smoothX = null;
+    let smoothY = null;
+
+    let A1=0, B1=0, C1=0, A2=0, B2=0, C2=0;
+    let haveFit = false;
+    let fitInfo = null;
+
+    function setDebug(s){
+      if(!dbg) return;
+      dbg.style.display = DEBUG ? "block" : "none";
+      if(DEBUG) dbg.textContent = s;
+    }
+
+    function updateImgFit(){
+      if(!mapBox || !mapImg) return;
+
+      const box = mapBox.getBoundingClientRect();
+      const natW = mapImg.naturalWidth  || 1920;
+      const natH = mapImg.naturalHeight || 1080;
+
+      const boxAR = box.width / box.height;
+      const imgAR = natW / natH;
+
+      let w,h,left,top;
+      if(imgAR > boxAR){
+        w = box.width;
+        h = w / imgAR;
+        left = 0;
+        top = (box.height - h) / 2;
+      }else{
+        h = box.height;
+        w = h * imgAR;
+        top = 0;
+        left = (box.width - w) / 2;
+      }
+      imgFit = { left, top, w, h, natW, natH };
+    }
+
+    function imgPxToOverlay(x,y){
+      if(!imgFit) updateImgFit();
+      const sx = imgFit.w / imgFit.natW;
+      const sy = imgFit.h / imgFit.natH;
+      return { x: imgFit.left + x*sx, y: imgFit.top + y*sy };
+    }
+
+    function setPin(x,y){
+      if(!pin) return;
+      if(smoothX == null){ smoothX = x; smoothY = y; }
+      smoothX = smoothX + (x - smoothX) * SMOOTH;
+      smoothY = smoothY + (y - smoothY) * SMOOTH;
+      pin.style.left = smoothX + "px";
+      pin.style.top  = smoothY + "px";
+    }
+
+    function inv3(m){
+      const a=m[0], b=m[1], c=m[2],
+            d=m[3], e=m[4], f=m[5],
+            g=m[6], h=m[7], i=m[8];
+
+      const A =  (e*i - f*h);
+      const B = -(d*i - f*g);
+      const C =  (d*h - e*g);
+      const D = -(b*i - c*h);
+      const E =  (a*i - c*g);
+      const F = -(a*h - b*g);
+      const G =  (b*f - c*e);
+      const H = -(a*f - c*d);
+      const I =  (a*e - b*d);
+
+      const det = a*A + b*B + c*C;
+      if(Math.abs(det) < 1e-12) return null;
+
+      const invDet = 1/det;
+      return [
+        A*invDet, D*invDet, G*invDet,
+        B*invDet, E*invDet, H*invDet,
+        C*invDet, F*invDet, I*invDet
+      ];
+    }
+
+    function mulMatVec3(m, v){
+      return [
+        m[0]*v[0] + m[1]*v[1] + m[2]*v[2],
+        m[3]*v[0] + m[4]*v[1] + m[5]*v[2],
+        m[6]*v[0] + m[7]*v[1] + m[8]*v[2],
+      ];
+    }
+
+    function fitAffineLeastSquares(points){
+      if(!points || points.length < 3) return null;
+
+      let sLL=0, sLa=0, sL1=0, saa=0, sa1=0, s11=0;
+      let bxL=0, bxA=0, bx1=0;
+      let byL=0, byA=0, by1=0;
+
+      for(const p of points){
+        const L = p.lon, A = p.lat, X = p.x, Y = p.y;
+
+        sLL += L*L;
+        sLa += L*A;
+        sL1 += L;
+        saa += A*A;
+        sa1 += A;
+        s11 += 1;
+
+        bxL += L*X; bxA += A*X; bx1 += X;
+        byL += L*Y; byA += A*Y; by1 += Y;
+      }
+
+      const MtM = [
+        sLL, sLa, sL1,
+        sLa, saa, sa1,
+        sL1, sa1, s11
+      ];
+      const inv = inv3(MtM);
+      if(!inv) return null;
+
+      const tx = mulMatVec3(inv, [bxL, bxA, bx1]);
+      const ty = mulMatVec3(inv, [byL, byA, by1]);
+
+      let err2 = 0;
+      for(const p of points){
+        const xHat = tx[0]*p.lon + tx[1]*p.lat + tx[2];
+        const yHat = ty[0]*p.lon + ty[1]*p.lat + ty[2];
+        const dx = xHat - p.x;
+        const dy = yHat - p.y;
+        err2 += dx*dx + dy*dy;
+      }
+      const rms = Math.sqrt(err2 / points.length);
+
+      return { A1: tx[0], B1: tx[1], C1: tx[2], A2: ty[0], B2: ty[1], C2: ty[2], rms };
+    }
+
+    function geoToImgPx(lat, lon){
+      return { x: A1*lon + B1*lat + C1, y: A2*lon + B2*lat + C2 };
+    }
+
+    async function fetchPos(){
+      const r = await fetch(POS_URL, {
+        cache: "no-store",
+        headers: { "X-Overlay-Key": OVERLAY_KEY }
+      });
+      if(!r.ok) throw new Error("POS http " + r.status);
+      return await r.json();
+    }
+
+    function readLatLon(j){
+      const lat = j?.lat, lon = j?.lon;
+      if(typeof lat !== "number" || typeof lon !== "number") return null;
+      return { lat, lon };
+    }
+
+    async function tick(){
+      try{
+        if(!haveFit){
+          setDebug("ingen transform ännu (bilden kanske inte laddat?)");
+          return;
+        }
+
+        const j = await fetchPos();
+        const pos = readLatLon(j);
+        if(!pos){
+          setDebug("hittar ingen lat/lon i worker-json");
+          return;
+        }
+
+        const img = geoToImgPx(pos.lat, pos.lon);
+
+        const natW = mapImg.naturalWidth  || 1920;
+        const natH = mapImg.naturalHeight || 1080;
+        const cx = clamp(img.x, 0, natW);
+        const cy = clamp(img.y, 0, natH);
+
+        const ov = imgPxToOverlay(cx, cy);
+        setPin(ov.x, ov.y);
+
+        setDebug(
+          `fit rms(px): ${fitInfo?.rms?.toFixed(2) ?? "?"}\n` +
+          `lat: ${pos.lat.toFixed(6)}\nlon: ${pos.lon.toFixed(6)}\n` +
+          `img: ${img.x.toFixed(1)}, ${img.y.toFixed(1)}\n` +
+          `speed: ${typeof j?.speed === "number" ? j.speed.toFixed(2) : "-"}\n` +
+          `motion: ${j?.motion ?? "-"}\n` +
+          `ts: ${j?.ts ?? "-"}`
+        );
+      }catch(e){
+        setDebug(String(e?.message || e));
+      }
+    }
+
+    function recomputeFit(){
+      fitInfo = fitAffineLeastSquares(CAL);
+      if(!fitInfo){
+        haveFit = false;
+        setDebug("kunde inte räkna ut transform (kolla dina punkter)");
+        return;
+      }
+      A1 = fitInfo.A1; B1 = fitInfo.B1; C1 = fitInfo.C1;
+      A2 = fitInfo.A2; B2 = fitInfo.B2; C2 = fitInfo.C2;
+      haveFit = true;
+    }
+
+    function start(){
+      updateImgFit();
+      window.addEventListener("resize", updateImgFit);
+      recomputeFit();
+
+      setInterval(tick, POLL_MS);
+      tick();
+    }
+
+    mapImg.addEventListener("load", updateImgFit);
+    start();
+
+    // DEBUG = true;
+  </script>
+</body>
+</html>
