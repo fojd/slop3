@@ -16,19 +16,25 @@
       font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
     }
 
+    /* fyll hela viewport, ingen padding som kan störa scaling */
     #wrap{
-      width:100%;
-      height:100%;
+      width:100vw;
+      height:100vh;
       display:flex;
       align-items:center;
       justify-content:center;
-      padding:24px;
+      padding:0;
     }
 
+    /* DESIGN-YTA: alltid 1920x1080. vi skalar hela boxen med --s */
     #mapBox{
       position:relative;
-      width:min(1600px, 96vw);
-      aspect-ratio:16 / 9;
+      width:1920px;
+      height:1080px;
+
+      transform: scale(var(--s, 1));
+      transform-origin:center center;
+
       border-radius:18px;
       overflow:hidden;
       background:transparent;
@@ -88,7 +94,7 @@
       left:50%;
       top:50%;
       transform:translate(-50%, -58%);
-      width:54px !important;
+      width:54px;
       height:auto;
       filter: drop-shadow(0 8px 18px rgba(0,0,0,.55));
       user-select:none;
@@ -132,7 +138,7 @@
   <script>
     /***********************
       Traccar (via Cloudflare Worker) → pin on custom image (least-squares affine)
-      Image: https://i.imgur.com/j5upGje.jpeg
+      Design space: 1920x1080 (always)
     ************************/
 
     const POS_URL = "https://delicate-mud-07e0.erik-bondesson99.workers.dev/pos";
@@ -162,10 +168,12 @@
 
     const clamp = (n,a,b)=>Math.max(a, Math.min(b,n));
 
-    let imgFit = null;
+    // object-fit contain rect IN DESIGN SPACE (1920x1080, unscaled)
+    let imgFit = null; // {left, top, w, h, natW, natH}
     let smoothX = null;
     let smoothY = null;
 
+    // affine coeffs
     let A1=0, B1=0, C1=0, A2=0, B2=0, C2=0;
     let haveFit = false;
     let fitInfo = null;
@@ -176,27 +184,37 @@
       if(DEBUG) dbg.textContent = s;
     }
 
-    function updateImgFit(){
-      if(!mapBox || !mapImg) return;
+    // scale 1920x1080 to fit viewport
+    function updateScale(){
+      const designW = 1920;
+      const designH = 1080;
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+      const s = Math.min(vw / designW, vh / designH);
+      mapBox.style.setProperty("--s", String(s));
+    }
 
-      const box = mapBox.getBoundingClientRect();
+    function updateImgFit(){
+      const boxW = 1920;
+      const boxH = 1080;
+
       const natW = mapImg.naturalWidth  || 1920;
       const natH = mapImg.naturalHeight || 1080;
 
-      const boxAR = box.width / box.height;
+      const boxAR = boxW / boxH;
       const imgAR = natW / natH;
 
       let w,h,left,top;
       if(imgAR > boxAR){
-        w = box.width;
+        w = boxW;
         h = w / imgAR;
         left = 0;
-        top = (box.height - h) / 2;
+        top = (boxH - h) / 2;
       }else{
-        h = box.height;
+        h = boxH;
         w = h * imgAR;
         top = 0;
-        left = (box.width - w) / 2;
+        left = (boxW - w) / 2;
       }
       imgFit = { left, top, w, h, natW, natH };
     }
@@ -208,6 +226,7 @@
       return { x: imgFit.left + x*sx, y: imgFit.top + y*sy };
     }
 
+    // pin gets DESIGN px (1920x1080). scale happens via mapBox transform.
     function setPin(x,y){
       if(!pin) return;
       if(smoothX == null){ smoothX = x; smoothY = y; }
@@ -333,6 +352,7 @@
 
         const natW = mapImg.naturalWidth  || 1920;
         const natH = mapImg.naturalHeight || 1080;
+
         const cx = clamp(img.x, 0, natW);
         const cy = clamp(img.y, 0, natH);
 
@@ -365,15 +385,24 @@
     }
 
     function start(){
-      updateImgFit();
-      window.addEventListener("resize", updateImgFit);
-      recomputeFit();
+      updateScale();
 
+      if(mapImg.complete){
+        updateImgFit();
+      }else{
+        mapImg.addEventListener("load", updateImgFit, { once:true });
+      }
+
+      window.addEventListener("resize", ()=>{
+        updateScale();
+        updateImgFit();
+      });
+
+      recomputeFit();
       setInterval(tick, POLL_MS);
       tick();
     }
 
-    mapImg.addEventListener("load", updateImgFit);
     start();
 
     // DEBUG = true;
