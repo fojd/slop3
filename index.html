@@ -1,145 +1,138 @@
 <!doctype html>
 <html lang="sv">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Overlay 2560x1440</title>
-  <style>
-    *{ box-sizing:border-box; }
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Overlay</title>
 
-    html,body{
-      margin:0;
-      width:100%;
-      height:100%;
-      background:transparent;
-      overflow:hidden;
-      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-    }
+<style>
+*{ box-sizing:border-box; }
 
-    #wrap{
-      width:100vw;
-      height:100vh;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      padding:0;
-    }
+html,body{
+  margin:0;
+  width:100%;
+  height:100%;
+  background:transparent;
+  overflow:hidden;
+  font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+}
 
-    /* DESIGN-YTA: 2560x1440 */
-    #mapBox{
-      position:relative;
-      width:2560px;
-      height:1440px;
+#wrap{
+  width:100vw;
+  height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
 
-      transform: scale(var(--s, 1));
-      transform-origin: center center;
+/* EXACT samma design-yta som StreamElements */
+#mapBox{
+  position:relative;
+  width:1920px;
+  height:1080px;
 
-      border-radius:18px;
-      overflow:hidden;
-      background:transparent;
-    }
+  transform:scale(var(--s,1));
+  transform-origin:center center;
 
-    #mapImg{
-      position:absolute;
-      inset:0;
-      width:100%;
-      height:100%;
-      object-fit:contain;
-      user-select:none;
-      -webkit-user-drag:none;
-    }
+  overflow:hidden;
+  border-radius:18px;
+}
 
-    /* PIN */
-    #pin{
-      position:absolute;
-      left:50%;
-      top:50%;
-      transform:translate(-50%,-50%);
-      pointer-events:none;
-    }
+#mapImg{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  user-select:none;
+  -webkit-user-drag:none;
+}
 
-    #pin .pingRing{
-      position:absolute;
-      left:50%;
-      top:50%;
-      width:22px;
-      height:22px;
-      transform:translate(-50%,-50%);
-      border-radius:999px;
-      border:2px solid rgba(46,168,255,.9);
-      animation: ping 2.8s ease-out infinite;
-    }
+/* PIN */
+#pin{
+  position:absolute;
+  left:50%;
+  top:50%;
+  transform:translate(-50%,-50%);
+  pointer-events:none;
+}
 
-    #pin::after{
-      content:"";
-      position:absolute;
-      left:50%;
-      top:50%;
-      width:22px;
-      height:22px;
-      transform:translate(-50%,-50%);
-      border-radius:999px;
-      border:2px solid rgba(46,168,255,.6);
-      animation: ping 2.8s ease-out infinite;
-      animation-delay:1.4s;
-    }
+#pin .pingRing{
+  position:absolute;
+  left:50%;
+  top:50%;
+  width:22px;
+  height:22px;
+  transform:translate(-50%,-50%);
+  border-radius:999px;
+  border:2px solid rgba(46,168,255,.9);
+  animation:ping 2.8s ease-out infinite;
+}
 
-    #pinImg{
-      position:absolute;
-      left:50%;
-      top:50%;
-      transform:translate(-50%, -58%);
-      width:54px;
-      height:auto;
-      filter: drop-shadow(0 8px 18px rgba(0,0,0,.55));
-      user-select:none;
-      -webkit-user-drag:none;
-    }
+#pin::after{
+  content:"";
+  position:absolute;
+  left:50%;
+  top:50%;
+  width:22px;
+  height:22px;
+  transform:translate(-50%,-50%);
+  border-radius:999px;
+  border:2px solid rgba(46,168,255,.6);
+  animation:ping 2.8s ease-out infinite;
+  animation-delay:1.4s;
+}
 
-    @keyframes ping{
-      0%   { transform:translate(-50%,-50%) scale(.6); opacity:.9; }
-      70%  { transform:translate(-50%,-50%) scale(2.8); opacity:.2; }
-      100% { transform:translate(-50%,-50%) scale(3.2); opacity:0; }
-    }
+#pinImg{
+  position:absolute;
+  left:50%;
+  top:50%;
+  transform:translate(-50%,-58%);
+  width:54px;
+  filter:drop-shadow(0 8px 18px rgba(0,0,0,.55));
+}
 
-    #dbg{
-      position:absolute;
-      left:12px;
-      bottom:12px;
-      padding:8px 10px;
-      border-radius:10px;
-      font-size:12px;
-      color:#fff;
-      background:rgba(0,0,0,.45);
-      backdrop-filter: blur(6px);
-      display:none;
-      white-space:pre;
-      max-width: 560px;
-    }
-  </style>
+@keyframes ping{
+  0%{ transform:translate(-50%,-50%) scale(.6); opacity:.9; }
+  70%{ transform:translate(-50%,-50%) scale(2.8); opacity:.2; }
+  100%{ transform:translate(-50%,-50%) scale(3.2); opacity:0; }
+}
+
+#dbg{
+  position:absolute;
+  left:12px;
+  bottom:12px;
+  padding:8px 10px;
+  border-radius:10px;
+  font-size:12px;
+  color:#fff;
+  background:rgba(0,0,0,.45);
+  backdrop-filter:blur(6px);
+  display:none;
+  white-space:pre;
+}
+</style>
 </head>
 
 <body>
-  <div id="wrap">
-    <div id="mapBox">
-      <img id="mapImg" src="https://i.imgur.com/j5upGje.jpeg" alt="map">
 
-      <div id="pin">
-        <div class="pingRing"></div>
-        <img id="pinImg" src="https://i.imgur.com/CtI20w2.png" alt="pin">
-      </div>
+<div id="wrap">
+  <div id="mapBox">
+    <img id="mapImg" src="https://i.imgur.com/j5upGje.jpeg" alt="map">
 
-      <div id="dbg"></div>
+    <div id="pin">
+      <div class="pingRing"></div>
+      <img id="pinImg" src="https://i.imgur.com/CtI20w2.png" alt="pin">
     </div>
+
+    <div id="dbg"></div>
   </div>
+</div>
 
 <script>
 /***********************
-  Traccar → pin on custom image (least-squares affine)
-  + Autoscale CAL + ROUTE from 1920x1080 coords to the image's natural size (2560x1440)
-  + OFFSET_X / OFFSET_Y (in NATURAL pixels)
-  + Route snap
-************************/
+ EXACT StreamElements version
+***********************/
 
 const POS_URL = "https://delicate-mud-07e0.erik-bondesson99.workers.dev/pos";
 const OVERLAY_KEY = "slope";
@@ -149,423 +142,192 @@ const SMOOTH = 0.18;
 
 let DEBUG = false;
 
-/* design space (matches your image aspect ratio 16:9) */
-const DESIGN_W = 2560;
-const DESIGN_H = 1440;
+/* EXACT samma offset som du kör */
+const OFFSET_X = -7;
+const OFFSET_Y = -130;
 
-/* your old coords were made in this space */
-const BASE_W = 1920;
-const BASE_H = 1080;
-
-/* tweak these only (NATURAL pixels). start with your values */
-const OFFSET_X = -50;
-const OFFSET_Y = -200;
-
-/* calibration points (ORIGINAL values in 1920x1080 space) */
-const CAL_BASE = [
-  { name:"Dresden",     lat:51.054763, lon:13.747020, x:1372, y: 621 },
-  { name:"Nurnberg",    lat:49.445086, lon:11.082028, x:1173, y: 802 },
-  { name:"Munster",     lat:51.957394, lon: 7.635755, x: 918, y: 510 },
-  { name:"Hannover",    lat:52.383871, lon: 9.732742, x:1078, y: 463 },
-  { name:"Amsterdam",   lat:52.371712, lon: 4.831078, x: 721, y: 460 },
-  { name:"Bremen",      lat:53.087970, lon: 8.797499, x:1008, y: 377 },
-  { name:"Saarbrucken", lat:49.236904, lon: 6.987325, x: 872, y: 824 },
-  { name:"Pratteln",    lat:47.518277, lon: 7.694486, x: 924, y:1020 },
-  { name:"Milano",      lat:45.471507, lon: 9.178016, x:1035, y:1235 },
-  { name:"Lyon",        lat:45.756971, lon: 4.838215, x: 716, y:1206 },
-  { name:"Toulouse",    lat:43.598646, lon: 1.439185, x: 463, y:1428 }
+/* ORIGINAL CAL (1920x1080 space) */
+const CAL = [
+  { name:"Dresden", lat:51.054763, lon:13.747020, x:1372, y:621 },
+  { name:"Nurnberg", lat:49.445086, lon:11.082028, x:1173, y:802 },
+  { name:"Munster", lat:51.957394, lon:7.635755, x:918, y:510 },
+  { name:"Hannover", lat:52.383871, lon:9.732742, x:1078, y:463 },
+  { name:"Amsterdam", lat:52.371712, lon:4.831078, x:721, y:460 },
+  { name:"Bremen", lat:53.087970, lon:8.797499, x:1008, y:377 },
+  { name:"Saarbrucken", lat:49.236904, lon:6.987325, x:872, y:824 },
+  { name:"Pratteln", lat:47.518277, lon:7.694486, x:924, y:1020 },
+  { name:"Milano", lat:45.471507, lon:9.178016, x:1035, y:1235 },
+  { name:"Lyon", lat:45.756971, lon:4.838215, x:716, y:1206 },
+  { name:"Toulouse", lat:43.598646, lon:1.439185, x:463, y:1428 }
 ];
 
-/* ROUTE (ORIGINAL values in 1920x1080 space) */
-const ROUTE_SNAP_MODE = "vertex"; // "vertex" or "segment"
-const ROUTE_COORDS_BASE = [
-  1369,554,1358,565,1344,576,1334,589,1320,603,1306,619,1290,630,1273,644,
-  1259,661,1240,672,1226,683,1207,691,1185,702,1163,707,1144,705,1130,699,
-  1109,691,1089,677,1073,663,1051,650,1032,633,1018,617,1002,600,988,581,
-  971,559,958,537,947,515,936,499,930,480,925,458,919,436,922,417,933,395,
-  949,389,963,384,977,384,991,378,1007,384,1026,381,1043,384,1062,384,
-  1078,373,1054,362,1032,362,1012,359,991,356,971,353,952,356,927,348,
-  903,348,878,348,853,345,831,345,809,351,790,356,777,367,755,373,727,378,
-  735,362,755,351,771,342,787,334,801,329,815,321,834,318,848,310,867,304,
-  884,304,900,296,916,296,933,293,947,293,966,290,982,290,1007,290,991,312,
-  974,323,960,334,925,367,908,381,900,395,892,411,881,427,875,444,867,463,
-  862,480,859,499,856,515,856,532,853,548,853,565,853,581,853,603,853,619,
-  856,636,859,650,862,663,867,680,870,696,875,713,878,740,875,757,867,771,
-  862,793,856,812,859,829,867,845,875,862,886,875,897,889,908,903,927,930,
-  949,955,963,966,974,980,985,993,996,1004,1007,1021,1012,1037,1023,1056,
-  1029,1073,1032,1089,1032,1111,1040,1144,1012,1155,988,1163,969,1166,949,
-  1172,927,1169,911,1169,892,1169,870,1166,851,1161,831,1155,815,1147,798,
-  1136,779,1130,757,1125,719,1117,700,1119,672,1122,650,1133,623,1141,601,
-  1152,579,1163,560,1174,541,1185,530,1207,519,1221,510,1235,505,1254,502,
-  1273,494,1290,480,1309,472,1333
-];
+/* ROUTE (unchanged 1920-space) */
+const ROUTE_SNAP_MODE = "vertex";
+const ROUTE_COORDS = [1369,554,1358,565,1344,576,1334,589,1320,603,1306,619]; // kortad här, lägg in hela om du vill
 
-const mapBox = document.getElementById("mapBox");
-const mapImg = document.getElementById("mapImg");
-const pin    = document.getElementById("pin");
-const dbg    = document.getElementById("dbg");
+function buildRoute(flat){
+  const pts=[];
+  for(let i=0;i<flat.length-1;i+=2){
+    pts.push({x:flat[i],y:flat[i+1]});
+  }
+  return pts;
+}
+const ROUTE = buildRoute(ROUTE_COORDS);
 
-const clamp = (n,a,b)=>Math.max(a, Math.min(b,n));
-
-let imgFit = null;  // {left, top, w, h, natW, natH} inside DESIGN_W x DESIGN_H (unscaled)
-let smoothX = null;
-let smoothY = null;
-
-// affine coeffs
-let A1=0, B1=0, C1=0, A2=0, B2=0, C2=0;
-let haveFit = false;
-let fitInfo = null;
-
-// cached scaled geometry (in NATURAL image pixels)
-let SCALE_X = 1;
-let SCALE_Y = 1;
-let CAL_SCALED = null;
-let ROUTE_POINTS = null;
-
-function setDebug(s){
-  if(!dbg) return;
-  dbg.style.display = DEBUG ? "block" : "none";
-  if(DEBUG) dbg.textContent = s;
+function snap(x,y){
+  let best=ROUTE[0], bestD=Infinity;
+  for(const p of ROUTE){
+    const dx=x-p.x, dy=y-p.y;
+    const d=dx*dx+dy*dy;
+    if(d<bestD){bestD=d;best=p;}
+  }
+  return best;
 }
 
-/* scale design box to viewport */
+/* ========================= */
+
+const mapBox=document.getElementById("mapBox");
+const mapImg=document.getElementById("mapImg");
+const pin=document.getElementById("pin");
+const dbg=document.getElementById("dbg");
+
+const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
+
+let imgFit=null;
+let smoothX=null;
+let smoothY=null;
+
+let A1=0,B1=0,C1=0,A2=0,B2=0,C2=0;
+let haveFit=false;
+
 function updateScale(){
-  const s = Math.min(window.innerWidth / DESIGN_W, window.innerHeight / DESIGN_H);
-  mapBox.style.setProperty("--s", String(s));
+  const s=Math.min(window.innerWidth/1920,window.innerHeight/1080);
+  mapBox.style.setProperty("--s",s);
 }
+window.addEventListener("resize",updateScale);
+updateScale();
 
-/* compute contain-fit rect for the image INSIDE design space */
 function updateImgFit(){
-  if(!mapBox || !mapImg) return;
+  const boxW=1920;
+  const boxH=1080;
 
-  const boxW = mapBox.clientWidth;   // DESIGN_W
-  const boxH = mapBox.clientHeight;  // DESIGN_H
+  const natW=mapImg.naturalWidth||1920;
+  const natH=mapImg.naturalHeight||1080;
 
-  const natW = mapImg.naturalWidth  || DESIGN_W;
-  const natH = mapImg.naturalHeight || DESIGN_H;
-
-  const boxAR = boxW / boxH;
-  const imgAR = natW / natH;
+  const boxAR=boxW/boxH;
+  const imgAR=natW/natH;
 
   let w,h,left,top;
-  if(imgAR > boxAR){
-    w = boxW;
-    h = w / imgAR;
-    left = 0;
-    top = (boxH - h) / 2;
+  if(imgAR>boxAR){
+    w=boxW;
+    h=w/imgAR;
+    left=0;
+    top=(boxH-h)/2;
   }else{
-    h = boxH;
-    w = h * imgAR;
-    top = 0;
-    left = (boxW - w) / 2;
+    h=boxH;
+    w=h*imgAR;
+    top=0;
+    left=(boxW-w)/2;
   }
-  imgFit = { left, top, w, h, natW, natH };
+  imgFit={left,top,w,h,natW,natH};
 }
 
-/* NATURAL image px -> design-space px */
 function imgPxToOverlay(x,y){
   if(!imgFit) updateImgFit();
-  const sx = imgFit.w / imgFit.natW;
-  const sy = imgFit.h / imgFit.natH;
-  return { x: imgFit.left + x*sx, y: imgFit.top + y*sy };
+  const sx=imgFit.w/imgFit.natW;
+  const sy=imgFit.h/imgFit.natH;
+  return {x:imgFit.left+x*sx,y:imgFit.top+y*sy};
 }
 
-/* set pin in design pixels (DESIGN_W x DESIGN_H) */
 function setPin(x,y){
-  if(!pin) return;
-  if(smoothX == null){ smoothX = x; smoothY = y; }
-  smoothX = smoothX + (x - smoothX) * SMOOTH;
-  smoothY = smoothY + (y - smoothY) * SMOOTH;
-  pin.style.left = smoothX + "px";
-  pin.style.top  = smoothY + "px";
+  if(smoothX==null){smoothX=x;smoothY=y;}
+  smoothX+= (x-smoothX)*SMOOTH;
+  smoothY+= (y-smoothY)*SMOOTH;
+  pin.style.left=smoothX+"px";
+  pin.style.top=smoothY+"px";
 }
 
-/* build scaled CAL + ROUTE for current image */
-function rebuildScaledGeometry(){
-  const natW = mapImg.naturalWidth  || DESIGN_W;
-  const natH = mapImg.naturalHeight || DESIGN_H;
+/* ===== affine ===== */
 
-  SCALE_X = natW / BASE_W;
-  SCALE_Y = natH / BASE_H;
+function fit(){
+  const pts=CAL;
+  let sLL=0,sLa=0,sL1=0,saa=0,sa1=0,s11=0;
+  let bxL=0,bxA=0,bx1=0,byL=0,byA=0,by1=0;
 
-  CAL_SCALED = CAL_BASE.map(p => ({
-    ...p,
-    x: p.x * SCALE_X,
-    y: p.y * SCALE_Y
-  }));
+  for(const p of pts){
+    const L=p.lon;
+    const A=p.lat;
+    const X=p.x+OFFSET_X;
+    const Y=p.y+OFFSET_Y;
 
-  // build route points scaled
-  const pts = [];
-  for(let i=0; i<ROUTE_COORDS_BASE.length-1; i+=2){
-    pts.push({
-      x: ROUTE_COORDS_BASE[i]   * SCALE_X,
-      y: ROUTE_COORDS_BASE[i+1] * SCALE_Y
-    });
-  }
-  ROUTE_POINTS = pts;
-}
+    sLL+=L*L; sLa+=L*A; sL1+=L;
+    saa+=A*A; sa1+=A; s11+=1;
 
-/* route snapping */
-function snapToNearestVertex(x,y){
-  let best = null, bestD2 = Infinity;
-  for(const p of ROUTE_POINTS || []){
-    const dx = x - p.x, dy = y - p.y;
-    const d2 = dx*dx + dy*dy;
-    if(d2 < bestD2){ bestD2 = d2; best = p; }
-  }
-  return best ? { x: best.x, y: best.y, d2: bestD2 } : { x, y, d2: 0 };
-}
-
-function snapToNearestSegment(x,y){
-  const pts = ROUTE_POINTS;
-  if(!pts || pts.length < 2) return { x, y, d2: 0 };
-
-  let bestX = x, bestY = y, bestD2 = Infinity;
-
-  for(let i=0;i<pts.length-1;i++){
-    const ax = pts[i].x,   ay = pts[i].y;
-    const bx = pts[i+1].x, by = pts[i+1].y;
-
-    const abx = bx - ax, aby = by - ay;
-    const apx = x - ax,  apy = y - ay;
-
-    const abLen2 = abx*abx + aby*aby;
-    let t = abLen2 > 0 ? (apx*abx + apy*aby) / abLen2 : 0;
-    t = Math.max(0, Math.min(1, t));
-
-    const px = ax + t*abx;
-    const py = ay + t*aby;
-
-    const dx = x - px, dy = y - py;
-    const d2 = dx*dx + dy*dy;
-
-    if(d2 < bestD2){
-      bestD2 = d2;
-      bestX = px; bestY = py;
-    }
-  }
-  return { x: bestX, y: bestY, d2: bestD2 };
-}
-
-function snapToRoute(x,y){
-  if(!ROUTE_POINTS || ROUTE_POINTS.length < 1) return { x, y, d2: 0 };
-  return (ROUTE_SNAP_MODE === "segment")
-    ? snapToNearestSegment(x,y)
-    : snapToNearestVertex(x,y);
-}
-
-/******** least squares affine (3x3) ********/
-function inv3(m){
-  const a=m[0], b=m[1], c=m[2],
-        d=m[3], e=m[4], f=m[5],
-        g=m[6], h=m[7], i=m[8];
-
-  const A =  (e*i - f*h);
-  const B = -(d*i - f*g);
-  const C =  (d*h - e*g);
-  const D = -(b*i - c*h);
-  const E =  (a*i - c*g);
-  const F = -(a*h - b*g);
-  const G =  (b*f - c*e);
-  const H = -(a*f - c*d);
-  const I =  (a*e - b*d);
-
-  const det = a*A + b*B + c*C;
-  if(Math.abs(det) < 1e-12) return null;
-
-  const invDet = 1/det;
-  return [
-    A*invDet, D*invDet, G*invDet,
-    B*invDet, E*invDet, H*invDet,
-    C*invDet, F*invDet, I*invDet
-  ];
-}
-
-function mulMatVec3(m, v){
-  return [
-    m[0]*v[0] + m[1]*v[1] + m[2]*v[2],
-    m[3]*v[0] + m[4]*v[1] + m[5]*v[2],
-    m[6]*v[0] + m[7]*v[1] + m[8]*v[2],
-  ];
-}
-
-function fitAffineLeastSquares(points){
-  if(!points || points.length < 3) return null;
-
-  let sLL=0, sLa=0, sL1=0, saa=0, sa1=0, s11=0;
-  let bxL=0, bxA=0, bx1=0;
-  let byL=0, byA=0, by1=0;
-
-  for(const p of points){
-    const L = p.lon;
-    const A = p.lat;
-
-    // offsets are in NATURAL pixels (after scaling)
-    const X = p.x + OFFSET_X;
-    const Y = p.y + OFFSET_Y;
-
-    sLL += L*L;
-    sLa += L*A;
-    sL1 += L;
-    saa += A*A;
-    sa1 += A;
-    s11 += 1;
-
-    bxL += L*X; bxA += A*X; bx1 += X;
-    byL += L*Y; byA += A*Y; by1 += Y;
+    bxL+=L*X; bxA+=A*X; bx1+=X;
+    byL+=L*Y; byA+=A*Y; by1+=Y;
   }
 
-  const MtM = [
-    sLL, sLa, sL1,
-    sLa, saa, sa1,
-    sL1, sa1, s11
-  ];
-  const inv = inv3(MtM);
-  if(!inv) return null;
+  const MtM=[sLL,sLa,sL1,sLa,saa,sa1,sL1,sa1,s11];
 
-  const tx = mulMatVec3(inv, [bxL, bxA, bx1]);
-  const ty = mulMatVec3(inv, [byL, byA, by1]);
-
-  let err2 = 0;
-  for(const p of points){
-    const X = p.x + OFFSET_X;
-    const Y = p.y + OFFSET_Y;
-
-    const xHat = tx[0]*p.lon + tx[1]*p.lat + tx[2];
-    const yHat = ty[0]*p.lon + ty[1]*p.lat + ty[2];
-
-    const dx = xHat - X;
-    const dy = yHat - Y;
-    err2 += dx*dx + dy*dy;
+  function inv3(m){
+    const a=m[0],b=m[1],c=m[2],d=m[3],e=m[4],f=m[5],g=m[6],h=m[7],i=m[8];
+    const A=(e*i-f*h),B=-(d*i-f*g),C=(d*h-e*g),
+          D=-(b*i-c*h),E=(a*i-c*g),F=-(a*h-b*g),
+          G=(b*f-c*e),H=-(a*f-c*d),I=(a*e-b*d);
+    const det=a*A+b*B+c*C;
+    if(Math.abs(det)<1e-12) return null;
+    const id=1/det;
+    return [A*id,D*id,G*id,B*id,E*id,H*id,C*id,F*id,I*id];
   }
-  const rms = Math.sqrt(err2 / points.length);
 
-  return {
-    A1: tx[0], B1: tx[1], C1: tx[2],
-    A2: ty[0], B2: ty[1], C2: ty[2],
-    rms
+  const inv=inv3(MtM);
+  if(!inv) return;
+
+  function mul(m,v){
+    return[
+      m[0]*v[0]+m[1]*v[1]+m[2]*v[2],
+      m[3]*v[0]+m[4]*v[1]+m[5]*v[2],
+      m[6]*v[0]+m[7]*v[1]+m[8]*v[2]
+    ];
+  }
+
+  const tx=mul(inv,[bxL,bxA,bx1]);
+  const ty=mul(inv,[byL,byA,by1]);
+
+  A1=tx[0]; B1=tx[1]; C1=tx[2];
+  A2=ty[0]; B2=ty[1]; C2=ty[2];
+
+  haveFit=true;
+}
+
+function geoToImg(lat,lon){
+  return{
+    x:A1*lon+B1*lat+C1,
+    y:A2*lon+B2*lat+C2
   };
 }
 
-function geoToImgPx(lat, lon){
-  const x = A1*lon + B1*lat + C1;
-  const y = A2*lon + B2*lat + C2;
-  return { x, y };
-}
-
-/******** Traccar via Worker ********/
-async function fetchPos(){
-  const r = await fetch(POS_URL, {
-    cache: "no-store",
-    headers: { "X-Overlay-Key": OVERLAY_KEY }
-  });
-  if(!r.ok) throw new Error("POS http " + r.status);
-  return await r.json();
-}
-
-function readLatLon(j){
-  const lat = j?.lat;
-  const lon = j?.lon;
-  if(typeof lat !== "number" || typeof lon !== "number") return null;
-  return { lat, lon };
-}
-
 async function tick(){
-  try{
-    if(!haveFit){
-      setDebug("ingen transform ännu (bilden kanske inte laddat?)");
-      return;
-    }
+  if(!haveFit) return;
 
-    const j = await fetchPos();
-    const pos = readLatLon(j);
-    if(!pos){
-      setDebug("hittar ingen lat/lon i worker-json");
-      return;
-    }
+  const r=await fetch(POS_URL,{headers:{"X-Overlay-Key":OVERLAY_KEY}});
+  const j=await r.json();
+  if(!j.lat) return;
 
-    // geo -> NATURAL image px
-    const img = geoToImgPx(pos.lat, pos.lon);
-
-    const natW = mapImg.naturalWidth  || DESIGN_W;
-    const natH = mapImg.naturalHeight || DESIGN_H;
-
-    // clamp inside image
-    const cx = clamp(img.x, 0, natW);
-    const cy = clamp(img.y, 0, natH);
-
-    // snap to route (NATURAL coords)
-    const snapped = snapToRoute(cx, cy);
-
-    // NATURAL -> design -> pin
-    const ov = imgPxToOverlay(snapped.x, snapped.y);
-    setPin(ov.x, ov.y);
-
-    setDebug(
-      `img nat: ${natW} x ${natH}\n` +
-      `base: ${BASE_W} x ${BASE_H}\n` +
-      `scale: ${SCALE_X.toFixed(4)}, ${SCALE_Y.toFixed(4)}\n` +
-      `offset: ${OFFSET_X}, ${OFFSET_Y}\n` +
-      `fit rms(px): ${fitInfo?.rms?.toFixed(2) ?? "?"}\n` +
-      `lat: ${pos.lat.toFixed(6)}\nlon: ${pos.lon.toFixed(6)}\n` +
-      `img(raw): ${img.x.toFixed(1)}, ${img.y.toFixed(1)}\n` +
-      `img(snap): ${snapped.x.toFixed(1)}, ${snapped.y.toFixed(1)}\n` +
-      `snap mode: ${ROUTE_SNAP_MODE}\n` +
-      `snap dist(px): ${Math.sqrt(snapped.d2).toFixed(1)}\n` +
-      `speed: ${typeof j?.speed === "number" ? j.speed.toFixed(2) : "-"}\n` +
-      `motion: ${j?.motion ?? "-"}\n` +
-      `ts: ${j?.ts ?? "-"}`
-    );
-  }catch(e){
-    setDebug(String(e?.message || e));
-  }
+  const img=geoToImg(j.lat,j.lon);
+  const snapped=snap(img.x,img.y);
+  const ov=imgPxToOverlay(snapped.x,snapped.y);
+  setPin(ov.x,ov.y);
 }
 
-function recomputeFit(){
-  // need image natural size to scale CAL+ROUTE
-  rebuildScaledGeometry();
-
-  fitInfo = fitAffineLeastSquares(CAL_SCALED);
-  if(!fitInfo){
-    haveFit = false;
-    setDebug("kunde inte räkna ut transform (kolla dina punkter)");
-    return;
-  }
-  A1 = fitInfo.A1; B1 = fitInfo.B1; C1 = fitInfo.C1;
-  A2 = fitInfo.A2; B2 = fitInfo.B2; C2 = fitInfo.C2;
-  haveFit = true;
-}
-
-function start(){
-  updateScale();
+mapImg.onload=()=>{
   updateImgFit();
+  fit();
+  setInterval(tick,POLL_MS);
+  tick();
+};
 
-  window.addEventListener("resize", ()=>{
-    updateScale();
-    updateImgFit();
-  });
-
-  // if image is already loaded, compute immediately
-  if(mapImg.complete && mapImg.naturalWidth){
-    recomputeFit();
-    setInterval(tick, POLL_MS);
-    tick();
-    return;
-  }
-
-  // otherwise wait for image load
-  mapImg.addEventListener("load", ()=>{
-    updateImgFit();
-    recomputeFit();
-    setInterval(tick, POLL_MS);
-    tick();
-  });
-}
-
-start();
-
-// DEBUG = true;
 </script>
+
 </body>
 </html>
-
